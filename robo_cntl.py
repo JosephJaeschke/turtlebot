@@ -42,7 +42,7 @@ window=0
 
 def pointToIndex(point):
 	#converts a tuple holding a coordinate to a tuple index for grid
-	return
+	return (round((point[0]-mData.origin[0])/width),round((point[1]-mData.origin[1])/width))
 
 def indexToPoint(index):
 	#converts a tuple holding an index to a tuple coord of the bottom left corner of cell
@@ -98,6 +98,81 @@ def isBlocked(x1,y1):
 				if basePt[1]<=y<=basePt[1]+width and min(otherPt[0],point[0])<=basePt[0]<=max(otherPt[0],point[0]):
 					return True
 	return False
+
+def chbyshvDist(pos,end):
+	#Given the position tuple and end tuple 
+	return max(abs(pos[0]-end[0]),abs(pos[1]-end[1]))
+	
+
+def gridSolver(heur,update,strt,goal):
+	#A* function takes a heursitic function and getParent function to switch between A* and FDA*
+	#strt is the tuple for the inital position (given in actual coordinates)
+	#end is the tuple for the goal (given in actual coordinates)
+	path=[]		#list of coordinates in optimal path
+	fringe=[]	#list of coordinates in open list
+	closed=[]	#list of coordinates in closed list
+	curPos=(heur(strt,goal),strt) #tuples in heap are coordinates, not indexes
+	curIndex=pointToIndex(strt)
+	heapq.heappush(fringe,curPos) #push start into heap. Heapq orders tuples by first element
+	while fringe: #while fringe is non empty
+		curPos=heapq.heappop(fringe)
+		curIndex=pointToIndex(curPos[1])
+		if curPos==goal:
+			print "Found Path!"
+			nodeIndex=pointToIndex(curPos[1])
+			node=grid[nodeIndex[0]][nodeIndex[1]]
+			while not(node.vertex.parent==None):
+				path.append(node.vertex.pos) #make a list of corrdinate tuples
+				parent=node.vertex.parent
+				parentIndex=pointToIndex(parent)
+				node=grid[parentIndex[0]][parentIndex[1]]
+		row=curIndex[0]
+		col=curIndex[1]
+		closed.append(curPos[1])
+		succ=[] #all successors of curPos
+		#check top right neighbor
+		if grid[r][c].blocked==False:
+			succ.append((r+1,c-1))
+		#check top left neighbor
+		if r-1>=0:
+			if grid[r-1][c].blocked==False:
+				succ.append((r-1,c-1))
+		#check bottom right neighbor
+		if c+1<mData.height:
+			if grid[r][c+1].blocked==False:
+				succ.append((r+1,c+1))
+		#check bottom left neighbor
+		if r-1>=0 and c+1<mData.length:
+			if grid[r-1][c+1].blocked==False:
+				succ.append((r-1,c+1))
+		#check right neighbor
+		if c+1<mData.height:
+			if grid[r][c].blocked==False and grid[r][c+1].blocked==False:
+				succ.append((r+1,c))
+		#check top neighbor
+		if r-1>=0:
+			if grid[r][c].blocked==False and grid[r-1][c].blocked==False:
+				succ.append((r,c-1))
+		#check left neighbor
+		if r-1>0 and c+1<mData.height:
+			if grid[r-1][c].blocked==False and grid[r-1][c+1].blocked==False:
+				succ.append((r-1,c))
+		#check down neighbor
+		if r-1>0 and c+1<mData.height:
+			if grid[r-1][c+1].blocked==False and grid[r][c+1].blocked==False:
+				succ.append((r+1,c+1))
+		for x in succ:
+			#check if it exists, then if it's in the closed list, then if it's in the fringe
+			if x[0]<0 or x[0]>=mData.length or x[1]<0 or x[1]>=mData.height:
+				continue
+			if x not in closed:
+				inF=[a for a,b in enumerate(fringe) if y[1]==x]
+				if inF==[]:
+					#not in fringe so add it
+					grid[x[0]][x[1]].vertex.g=float("inf")
+
+
+
 
 def printMap():
 	global window
