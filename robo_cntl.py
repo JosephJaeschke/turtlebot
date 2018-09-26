@@ -39,10 +39,11 @@ grid=None
 mData=None
 width=0.2 #size of every cell (square) in meters
 window=0
+fPts=[]
 
 def pointToIndex(point):
 	#converts a tuple holding a coordinate to a tuple index for grid
-	return (round((point[0]-mData.origin[0])/width),round((point[1]-mData.origin[1])/width))
+	return (int(round((point[0]-mData.origin[0])/width)),int(round(((point[1]-mData.origin[1])/(-1*width))-1)))
 
 def indexToPoint(index):
 	#converts a tuple holding an index to a tuple coord of the bottom left corner of cell
@@ -101,7 +102,50 @@ def isBlocked(x1,y1):
 
 def chbyshvDist(pos,end):
 	#Given the position tuple and end tuple 
-	return max(abs(pos[0]-end[0]),abs(pos[1]-end[1]))
+	coord=indexToPoint(pos)
+	return max(abs(coord[0]-end[0]),abs(coord[1]-end[1]))
+
+def updateFDA_star(parent,child,fringe,heur,goal):
+	gparent=grid[parent[0]][parent[1]].vertex.parent
+	if lineOfSight(vertex,child):
+		grid[gparent[0]][gparent[1]].vertex.g
+
+	else:
+		cost=0
+		if parent[0]-child[0]==0 != parent[1]-child[1]==0:
+			cost=0.2
+		else:
+			cost=1.414*0.2
+		if grid[parent[0]][parent[1]].vertex.g+cost<grid[child[0]][child[1]].vertex.g:
+			grid[child[0]][child[1]].vertex.g=grid[parent[0]][parent[1]].vertex.g+cost
+			grid[child[0]][child[1]].vertex.parent=parent
+			inF=[a for a,b in enumerate(fringe) if b[1]==child]
+			if not inF==[]:
+				fringe.pop(inF[0])
+				heapq.heapify(fringe)
+			grid[child[0]][child[1]].vertex.h=heur(child,goal)
+			heapq.heappush(fringe,(grid[child[0]][child[1]].vertex.g+grid[child[0]][child[1]].vertex.h,child))
+			fPts.append(child)
+
+
+	
+def updateA_star(parent,child,fringe,heur,goal):
+	cost=0
+	if parent[0]-child[0]==0 != parent[1]-child[1]==0: #not a diagonal
+		cost=0.2
+	else:
+		cost=1.414*0.2
+	if grid[parent[0]][parent[1]].vertex.g+cost<grid[child[0]][child[1]].vertex.g:
+		grid[child[0]][child[1]].vertex.g=grid[parent[0]][parent[1]].vertex.g+cost
+		grid[child[0]][child[1]].vertex.parent=parent
+		inF=[a for a,b in enumerate(fringe) if b[1]==child]
+		if not inF==[]:
+			fringe.pop(inF[0])
+			heapq.heapify(fringe)
+		grid[child[0]][child[1]].vertex.h=heur(child,goal)
+		heapq.heappush(fringe,(grid[child[0]][child[1]].vertex.g+grid[child[0]][child[1]].vertex.h,child))
+		fPts.append(child)
+
 	
 
 def gridSolver(heur,update,strt,goal):
@@ -111,24 +155,22 @@ def gridSolver(heur,update,strt,goal):
 	path=[]		#list of coordinates in optimal path
 	fringe=[]	#list of coordinates in open list
 	closed=[]	#list of coordinates in closed list
-	curPos=(heur(strt,goal),strt) #tuples in heap are coordinates, not indexes
-	curIndex=pointToIndex(strt)
-	heapq.heappush(fringe,curPos) #push start into heap. Heapq orders tuples by first element
+	curIndex=(heur(strt,goal),pointToIndex(strt)) #tuples in heap indexes
+	heapq.heappush(fringe,curIndex) #push start into heap. Heapq orders tuples by first element
 	while fringe: #while fringe is non empty
-		curPos=heapq.heappop(fringe)
-		curIndex=pointToIndex(curPos[1])
-		if curPos==goal:
+		curIndex=heapq.heappop(fringe)
+		curIndex=curIndex[1]
+		if curIndex==pointToIndex(goal):
 			print "Found Path!"
-			nodeIndex=pointToIndex(curPos[1])
-			node=grid[nodeIndex[0]][nodeIndex[1]]
+			node=grid[curIndex[0]][curIndex[1]]
 			while not(node.vertex.parent==None):
 				path.append(node.vertex.pos) #make a list of corrdinate tuples
-				parent=node.vertex.parent
-				parentIndex=pointToIndex(parent)
+				parentIndex=node.vertex.parent
 				node=grid[parentIndex[0]][parentIndex[1]]
-		row=curIndex[0]
-		col=curIndex[1]
-		closed.append(curPos[1])
+			return path
+		r=curIndex[0]
+		c=curIndex[1]
+		closed.append(curIndex)
 		succ=[] #all successors of curPos
 		#check top right neighbor
 		if grid[r][c].blocked==False:
@@ -157,21 +199,23 @@ def gridSolver(heur,update,strt,goal):
 		if r-1>0 and c+1<mData.height:
 			if grid[r-1][c].blocked==False and grid[r-1][c+1].blocked==False:
 				succ.append((r-1,c))
-		#check down neighbor
+		#check dowon neighbor
 		if r-1>0 and c+1<mData.height:
 			if grid[r-1][c+1].blocked==False and grid[r][c+1].blocked==False:
-				succ.append((r+1,c+1))
+				succ.append((r,c+1))
 		for x in succ:
 			#check if it exists, then if it's in the closed list, then if it's in the fringe
 			if x[0]<0 or x[0]>=mData.length or x[1]<0 or x[1]>=mData.height:
 				continue
 			if x not in closed:
-				inF=[a for a,b in enumerate(fringe) if y[1]==x]
+				inF=[a for a,b in enumerate(fringe) if b[1]==x]
 				if inF==[]:
 					#not in fringe so add it
 					grid[x[0]][x[1]].vertex.g=float("inf")
-
-
+					grid[x[0]][x[1]].vertex.parent=None
+				update((r,c),x,fringe,heur,goal)
+	print "No path..."
+	return None
 
 
 def printMap():
@@ -197,7 +241,19 @@ def printMap():
 		pg.draw.rect(window,(0,0,0),(i*5,0,1,mData.height*5),1)
 	for j in range(mData.height):
 		pg.draw.rect(window,(0,0,0),(0,j*5,mData.length*5,1),1)
+	strt=pointToIndex(mData.sgPairs[0][0])
+	end=pointToIndex(mData.sgPairs[0][1])
+	for x in fPts:
+		pg.draw.rect(window,(100,0,100),(x[0]*bs,x[1]*bs,bs,bs))
+	pg.draw.rect(window,(255,0,0),(end[0]*bs,end[1]*bs,bs,bs),1)
+	pg.draw.rect(window,(0,255,0),(strt[0]*bs,strt[1]*bs,bs,bs),1)
 	pg.display.update()
+
+def printPath(path):
+	if path==None:
+		return
+	global window
+	print path
 	
 
 if __name__ == "__main__":
@@ -243,6 +299,8 @@ if __name__ == "__main__":
 		for y in range(mData.height):
 			v=Vertex(indexToPoint((x,y)))
 			grid[x][y]=Cell((x,y),v,isBlocked(x,y))
+	p=gridSolver(chbyshvDist,updateA_star,mData.sgPairs[0][0],mData.sgPairs[0][1])
 	printMap()
+	printPath(p)
 	while True:
 		time.sleep(1)
