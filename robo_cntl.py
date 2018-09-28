@@ -49,6 +49,11 @@ def indexToPoint(index):
 	#converts a tuple holding an index to a tuple coord of the bottom left corner of cell
 	return (round(mData.origin[0]+width*index[0],1),round(mData.origin[1]-width*(index[1]+1),1))
 
+def dist(pt1,pt2):
+	p1=indexToPoint(pt1)
+	p2=indexToPoint(pt2)
+	return math.sqrt((p2[0]-p1[0])*(p2[0]-p1[0])+(p2[1]-p1[1])*(p2[1]-p1[1]))
+
 def isBlocked(x1,y1):
 	#returns true if there is an obstacle in a given index tuple, false otherwise
 	basePt=indexToPoint((x1,y1))
@@ -105,17 +110,68 @@ def chbyshvDist(pos,end):
 	coord=indexToPoint(pos)
 	return max(abs(coord[0]-end[0]),abs(coord[1]-end[1]))
 
+def lineOfSight(gparent,child):
+	x0=gparent[0]
+	y0=gparent[1]
+	x1=child[0]
+	x2=child[1]
+	f=0
+	dx=x1-x0
+	dy=y1-y0
+	sx=1
+	sy=1
+	if dy<0:
+		dy=-1*dy
+		sy=-1
+	if dx<0:
+		dx=-1*dx
+		sx-1
+	if dx>=dy:
+		while x0!=x1:
+			f=f+dy
+			if f>=dx:
+				if grid[x0+((sx-1)/2)][y0+((sy-1)/2)].blocked:
+					return False
+				y0=y0+sy
+				f=f-dx
+			if f!=0 and grid[x0+((sx-1)/2)][y0+((sy-1)/2)].blocked:
+				return False
+			if dy==0 and grid[x0+((sx-1)/2)][y0].blocked and grid[x0+((sx-1)/2)][y0-1].blocked:
+				return False
+			x0=x0+sx
+	else:
+		while y0!=y1:
+			f=f+dx
+			if f>=dy:
+				if grid[x0+((sx-1)/2)][y0+((sy-1)/2)].blocked:
+					return False
+				x0=x0+sx
+				f=f-dy
+			if f!=0 and grid[x0+((sx-1)/2)][y0+((sy-1)/2)].blocked:
+				return False
+			if dx==0 and grid[x0][y0+((sy-1)/2)].blocked and grid[x0-1][y0+((sy-1)/2)].blocked:
+				return False
+			y0=y0+sy
+	return True
+
+
 def updateFDA_star(parent,child,fringe,heur,goal):
 	gparent=grid[parent[0]][parent[1]].vertex.parent
 	if lineOfSight(vertex,child):
-		grid[gparent[0]][gparent[1]].vertex.g
+		cost=dist(gparent,child)
+		if grid[gparent[0]][gparent[1]].vertex.g+cost<grid[child[0]][child[1]].vertex.g:
+			grid[child[0]][child[1]].vertex.g=grid[gparent[0]][gparent[1]].vertex.g+cost
+			grid[child[0]][child[1]].vertex.parent=gparent
+			if not inF==[]:
+				fringe.pop(inF[0])
+				heapq.heapify(fringe)
+			grid[child[0]][child[1]].vertex.h=heur(child,goal)
+			heapq.heappush(fringe,(grid[child[0]][child[1]].vertex.g+grid[child[0]][child[1]].vertex.h,child))
+			fPts.append(child)
+
 
 	else:
-		cost=0
-		if parent[0]-child[0]==0 != parent[1]-child[1]==0:
-			cost=0.2
-		else:
-			cost=1.414*0.2
+		cost=dist(parent,child)
 		if grid[parent[0]][parent[1]].vertex.g+cost<grid[child[0]][child[1]].vertex.g:
 			grid[child[0]][child[1]].vertex.g=grid[parent[0]][parent[1]].vertex.g+cost
 			grid[child[0]][child[1]].vertex.parent=parent
@@ -130,11 +186,13 @@ def updateFDA_star(parent,child,fringe,heur,goal):
 
 	
 def updateA_star(parent,child,fringe,heur,goal):
-	cost=0
+	cost=dist(parent,child)
+	'''
 	if parent[0]-child[0]==0 != parent[1]-child[1]==0: #not a diagonal
 		cost=0.2
 	else:
 		cost=1.414*0.2
+	'''
 	if grid[parent[0]][parent[1]].vertex.g+cost<grid[child[0]][child[1]].vertex.g:
 		grid[child[0]][child[1]].vertex.g=grid[parent[0]][parent[1]].vertex.g+cost
 		grid[child[0]][child[1]].vertex.parent=parent
@@ -253,7 +311,16 @@ def printPath(path):
 	if path==None:
 		return
 	global window
-	print path
+	for coord in path:
+		p=pointToIndex(coord)
+		print p
+		rect=pg.Rect(p[0]*5,p[1]*5,5,5)
+		pg.draw.rect(window,(255,255,0),rect)
+	for i in range(mData.length):
+		pg.draw.rect(window,(0,0,0),(i*5,0,1,mData.height*5),1)
+	for i in range(mData.height):
+		pg.draw.rect(window,(0,0,0),(0,i*5,mData.length*5,1),1)
+	pg.display.update()
 	
 
 if __name__ == "__main__":
