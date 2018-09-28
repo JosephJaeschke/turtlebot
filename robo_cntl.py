@@ -54,6 +54,16 @@ def dist(pt1,pt2):
 	p2=indexToPoint(pt2)
 	return math.sqrt((p2[0]-p1[0])*(p2[0]-p1[0])+(p2[1]-p1[1])*(p2[1]-p1[1]))
 
+def fdaHeur(pos,end):
+	coord=indexToPoint(pos)
+	return math.sqrt((end[0]-coord[0])*(end[0]-coord[0])+(end[1]-coord[1])*(end[1]-coord[1]))
+
+def chbyshvDist(pos,end):
+	#Given the position tuple and end tuple 
+	coord=indexToPoint(pos)
+	return max(abs(coord[0]-end[0]),abs(coord[1]-end[1]))
+
+
 def isBlocked(x1,y1):
 	#returns true if there is an obstacle in a given index tuple, false otherwise
 	basePt=indexToPoint((x1,y1))
@@ -105,16 +115,11 @@ def isBlocked(x1,y1):
 					return True
 	return False
 
-def chbyshvDist(pos,end):
-	#Given the position tuple and end tuple 
-	coord=indexToPoint(pos)
-	return max(abs(coord[0]-end[0]),abs(coord[1]-end[1]))
-
 def lineOfSight(gparent,child):
 	x0=gparent[0]
 	y0=gparent[1]
 	x1=child[0]
-	x2=child[1]
+	y1=child[1]
 	f=0
 	dx=x1-x0
 	dy=y1-y0
@@ -157,11 +162,12 @@ def lineOfSight(gparent,child):
 
 def updateFDA_star(parent,child,fringe,heur,goal):
 	gparent=grid[parent[0]][parent[1]].vertex.parent
-	if lineOfSight(vertex,child):
+	if gparent!=None and lineOfSight(gparent,child):
 		cost=dist(gparent,child)
 		if grid[gparent[0]][gparent[1]].vertex.g+cost<grid[child[0]][child[1]].vertex.g:
 			grid[child[0]][child[1]].vertex.g=grid[gparent[0]][gparent[1]].vertex.g+cost
 			grid[child[0]][child[1]].vertex.parent=gparent
+			inF=[a for a,b in enumerate(fringe) if b[1]==child]
 			if not inF==[]:
 				fringe.pop(inF[0])
 				heapq.heapify(fringe)
@@ -366,7 +372,7 @@ if __name__ == "__main__":
 		for y in range(mData.height):
 			v=Vertex(indexToPoint((x,y)))
 			grid[x][y]=Cell((x,y),v,isBlocked(x,y))
-	p=gridSolver(chbyshvDist,updateA_star,mData.sgPairs[0][0],mData.sgPairs[0][1])
+	p=gridSolver(fdaHeur,updateFDA_star,mData.sgPairs[0][0],mData.sgPairs[0][1])
 	printMap()
 	printPath(p)
 	while True:
