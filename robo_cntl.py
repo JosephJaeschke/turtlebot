@@ -4,9 +4,6 @@ class mapData(object):
 		self.height=dy #number of cells in y direction
 		self.corners=edges
 		self.obsList=obstacles
-		for p in paths:
-			#snap start and goal points to grid
-			continue
 		self.sgPairs=paths
 		miny=99999
 		self.origin=0
@@ -37,12 +34,38 @@ import heapq
 import os.path
 import time
 import math
+import rospy
+from std_msgs.msg import String
+import sys
 
 grid=None
 mData=None
 width=0.2 #size of every cell (square) in meters
 window=0
 fPts=[]
+
+#ROS STUFF
+
+def callback(data):
+	rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
+
+def listener():
+	rospy.init_node('listener',anonymous=True)
+	rospy.Subscriber("chatter",String,callback)
+	rospy.spin()
+
+def moveClient(point):
+	rospy.wait_for_service('turtlebot_ctrl')
+	try:
+		turtlebot_control=rospy.ServiceProxy('turtlebot_ctrl',TurtleBotControl)
+		retVal=turtlebot_ctrl(point[0],point[1])
+		if not retVal:
+			print "Hit something"
+			sys.exit(1)
+	except rospy.ServiceException, e:
+		print "Something went wrong"
+		sys.exit(1)
+#END ROS STUFF
 
 def pointToIndex(point):
 	#converts a tuple holding a coordinate to a tuple index for grid
@@ -217,15 +240,27 @@ def updateA_star(parent,child,fringe,heur,goal):
 		heapq.heappush(fringe,(grid[child[0]][child[1]].vertex.g+grid[child[0]][child[1]].vertex.h,child))
 		fPts.append(child)
 
-	
+def snapToGrid(point):
+	inc=mData.origin[0]
+	while inc<point[0]:
+		inc=inc+width
+	newx=round(inc,2)
+	inc=mData.origin[1]
+	while inc>point[1]:
+		inc=inc-width
+	newy=round(inc,2)
+	return (newx,newy)
 
-def gridSolver(heur,update,strt,goal):
+def gridSolver(heur,update,start,finish):
 	#A* function takes a heursitic function and getParent function to switch between A* and FDA*
 	#strt is the tuple for the inital position (given in actual coordinates)
 	#end is the tuple for the goal (given in actual coordinates)
 	path=[]		#list of coordinates in optimal path
 	fringe=[]	#list of coordinates in open list
 	closed=[]	#list of coordinates in closed list
+	fPts=[]
+	strt=snapToGrid(start)
+	goal=snapToGrid(finish)
 	curIndex=(heur(strt,goal),pointToIndex(strt)) #tuples in heap indexes
 	heapq.heappush(fringe,curIndex) #push start into heap. Heapq orders tuples by first element
 	while fringe: #while fringe is non empty
@@ -326,7 +361,6 @@ def printPath(path):
 	global window
 	for coord in path:
 		p=pointToIndex(coord)
-		print p
 		rect=pg.Rect(p[0]*5,p[1]*5,5,5)
 		pg.draw.rect(window,(255,255,0),rect)
 	for i in range(mData.length):
@@ -335,6 +369,12 @@ def printPath(path):
 		pg.draw.rect(window,(0,0,0),(0,i*5,mData.length*5,1),1)
 	pg.display.update()
 	
+def tracePath(path):
+	if path==None:
+		return
+	path=list(reversed(path))
+	for p in path:
+		moveClient(p)
 
 if __name__ == "__main__":
 	#parse map file
