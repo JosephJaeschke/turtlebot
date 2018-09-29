@@ -4,6 +4,9 @@ class mapData(object):
 		self.height=dy #number of cells in y direction
 		self.corners=edges
 		self.obsList=obstacles
+		for p in paths:
+			#snap start and goal points to grid
+			continue
 		self.sgPairs=paths
 		miny=99999
 		self.origin=0
@@ -54,9 +57,13 @@ def dist(pt1,pt2):
 	p2=indexToPoint(pt2)
 	return math.sqrt((p2[0]-p1[0])*(p2[0]-p1[0])+(p2[1]-p1[1])*(p2[1]-p1[1]))
 
-def fdaHeur(pos,end):
+def fdaStarHeur(pos,end):
 	coord=indexToPoint(pos)
 	return math.sqrt((end[0]-coord[0])*(end[0]-coord[0])+(end[1]-coord[1])*(end[1]-coord[1]))
+
+def aStarHeur(pos,end):
+	coord=indexToPoint(pos)
+	return math.sqrt(2)*min(abs(coord[0]-end[0]),abs(coord[1]-end[1]))+max(abs(coord[0]-end[0]),abs(coord[1]-end[1]))-min(abs(coord[0]-end[0]),abs(coord[1]-end[1]))
 
 def chbyshvDist(pos,end):
 	#Given the position tuple and end tuple 
@@ -372,7 +379,8 @@ if __name__ == "__main__":
 		for y in range(mData.height):
 			v=Vertex(indexToPoint((x,y)))
 			grid[x][y]=Cell((x,y),v,isBlocked(x,y))
-	p=gridSolver(fdaHeur,updateFDA_star,mData.sgPairs[0][0],mData.sgPairs[0][1])
+	#do stuff
+	p=gridSolver(fdaStarHeur,updateFDA_star,mData.sgPairs[0][0],mData.sgPairs[0][1])
 	printMap()
 	printPath(p)
 	while True:
