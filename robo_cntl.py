@@ -340,14 +340,15 @@ def visGraphSolver(segments,start,goal):
 				path.append(par.pos)
 				vert=par
 			return path
+		closed.append(vert)
 		for l in segments:
 			if coord in l:
-				if l not in closed:
+				index=0
+				if l[0]==coord:
+					index=1
+				if l[index] not in closed:
 					inF=[a for a,b in enumerate(fringe) if b[1]==coord]
 					if inF==[]:
-						index=0
-						if l[0]==coord:
-							index=1
 						new=Vertex(l[index])
 						new.g=float("inf")
 						new.parent=None
