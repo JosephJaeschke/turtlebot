@@ -34,8 +34,8 @@ import heapq
 import os.path
 import time
 import math
-import rospy
-from std_msgs.msg import String
+#import rospy
+#from std_msgs.msg import String
 import sys
 
 grid=None
@@ -45,7 +45,7 @@ window=0
 fPts=[]
 
 #ROS STUFF
-
+'''
 def callback(data):
 	rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
 
@@ -66,7 +66,7 @@ def moveClient(point):
 		print "Something went wrong"
 		sys.exit(1)
 #END ROS STUFF
-
+'''
 def pointToIndex(point):
 	#converts a tuple holding a coordinate to a tuple index for grid
 	return (int(round((point[0]-mData.origin[0])/width)),int(round(((point[1]-mData.origin[1])/(-1*width))-1)))
