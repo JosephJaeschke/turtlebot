@@ -38,6 +38,8 @@ import rospy
 from std_msgs.msg import String
 import sys
 import pyclipper
+#from TurtleBotControl.srv import *
+#from geometry_msgs import Point
 
 grid=None
 mData=None
@@ -46,6 +48,7 @@ window=0
 fPts=[]
 
 #ROS STUFF
+'''
 def callback(data):
 	rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
 
@@ -53,13 +56,13 @@ def listener():
 	rospy.init_node('listener',anonymous=True)
 	rospy.Subscriber("chatter",String,callback)
 	rospy.spin()
-
+'''
 def moveClient(point):
 	retVal=False
-	rospy.wait_for_service('turtlebot_ctrl')
+	rospy.wait_for_service('TurtleBotControl')
 	try:
-		turtlebot_control=rospy.ServiceProxy('turtlebot_ctrl',TurtleBotControl)
-		retVal=turtlebot_ctrl(point[0],point[1])
+		turtlebot_control=rospy.ServiceProxy('/turtlebot_control',TurtleBotControl)
+		retVal=connect_to_server(point.x,point.y)
 	except rospy.ServiceException, e:
 		print "Something went wrong"
 	return retVal
@@ -408,7 +411,7 @@ def printPath(path,start,goal):
 	strt=pointToIndex(snapToGrid(start))
 	end=pointToIndex(snapToGrid(goal))
 	pg.draw.rect(window,(255,0,0),(end[0]*5,end[1]*5,5,5))
-	pg.draw.rect(window,(0,255,0),(strt[0]*5,strt[1]*5,5,5))
+	pg.draw.rect(window,(0,180,0),(strt[0]*5,strt[1]*5,5,5))
 	for i in range(mData.length):
 		pg.draw.rect(window,(0,0,0),(i*5,0,1,mData.height*5),1)
 	for j in range(mData.height):
@@ -432,10 +435,7 @@ def reInitGrid():
 			grid[j][i].vertex.g=0
 			grid[j][i].vertex.h=0
 
-	printMap()
-
 if __name__ == "__main__":
-	myPoint=Point(1,2,3)
 	#parse map file
 	print "Enter map file"
 	while True:
@@ -493,13 +493,13 @@ if __name__ == "__main__":
 		print "(1) Grid based, (2) Visibility Graph"
 		algo=raw_input()
 	if algo=="1":
-		printMap()
 		method="0"
 		while method!="1" and method!="2":
 			print "(1) A*, (2) FDA*"
 			method=raw_input()
 		if method=="1":
 			for pair in mData.sgPairs:
+				printMap()
 				print pair
 				sPath=gridSolver(aStarHeur,updateA_star,pair[0],pair[1])
 				sPath.insert(0,pair[1])
@@ -521,6 +521,8 @@ if __name__ == "__main__":
 				reInitGrid()
 		else:
 			for pair in mData.sgPairs:
+				printMap()
+				print pair
 				sPath=gridSolver(fdaStarHeur,updateFDA_star,pair[0],pair[1])
 				sPath.insert(0,pair[1])
 				printPath(sPath,pair[0],pair[1])
