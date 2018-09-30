@@ -55,16 +55,14 @@ def listener():
 	rospy.spin()
 
 def moveClient(point):
+	retVal=False
 	rospy.wait_for_service('turtlebot_ctrl')
 	try:
 		turtlebot_control=rospy.ServiceProxy('turtlebot_ctrl',TurtleBotControl)
 		retVal=turtlebot_ctrl(point[0],point[1])
-		if not retVal:
-			print "Hit something"
-			sys.exit(1)
 	except rospy.ServiceException, e:
 		print "Something went wrong"
-		sys.exit(1)
+	return retVal
 #END ROS STUFF
 '''
 def pointToIndex(point):
@@ -376,13 +374,16 @@ def printPath(path,start,goal):
 	for j in range(mData.height):
 		pg.draw.rect(window,(0,0,0),(0,j*5,mData.length*5,1),1)
 	pg.display.update()
+	tracePath(path)
 	
 def tracePath(path):
 	if path==None:
 		return
 	path=list(reversed(path))
 	for p in path:
-		moveClient(p)
+		#status=moveClient(p)
+		#if not status
+		return
 
 def reInitGrid():
 	for i in range(mData.height):
