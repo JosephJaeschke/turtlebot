@@ -260,6 +260,8 @@ def gridSolver(heur,update,start,finish):
 	closed=[]	#list of coordinates in closed list
 	strt=snapToGrid(start)
 	goal=snapToGrid(finish)
+	temp=pointToIndex(strt)
+	grid[temp[0]][temp[1]].vertex.h=heur(strt,goal)
 	curIndex=(heur(strt,goal),pointToIndex(strt)) #tuples in heap indexes
 	heapq.heappush(fringe,curIndex) #push start into heap. Heapq orders tuples by first element
 	while fringe: #while fringe is non empty
@@ -450,7 +452,20 @@ if __name__ == "__main__":
 				print pair
 				sPath=gridSolver(aStarHeur,updateA_star,pair[0],pair[1])
 				printPath(sPath,pair[0],pair[1])
-				raw_input("Press \"Enter\" to continue")
+				moveOn=0
+				while moveOn==0:
+					for event in pg.event.get():
+						keyPressed=pg.key.get_pressed()
+						if event.type==pg.MOUSEBUTTONUP:
+							coords=pg.mouse.get_pos()
+							cell=(coords[0]/5,coords[1]/5)
+							g=grid[cell[0]][cell[1]].vertex.g
+							h=grid[cell[0]][cell[1]].vertex.h
+							print indexToPoint(cell),"with g=",g," h=",h," f=",g+h
+						if keyPressed[pg.K_n]:
+							moveOn=1
+							break
+				time.sleep(0.2)
 				reInitGrid()
 		else:
 			for pair in mData.sgPairs:
