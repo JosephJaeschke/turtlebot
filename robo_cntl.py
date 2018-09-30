@@ -34,9 +34,10 @@ import heapq
 import os.path
 import time
 import math
-#import rospy
-#from std_msgs.msg import String
+import rospy
+from std_msgs.msg import String
 import sys
+import pyclipper
 
 grid=None
 mData=None
@@ -45,7 +46,6 @@ window=0
 fPts=[]
 
 #ROS STUFF
-'''
 def callback(data):
 	rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
 
@@ -63,8 +63,8 @@ def moveClient(point):
 	except rospy.ServiceException, e:
 		print "Something went wrong"
 	return retVal
+
 #END ROS STUFF
-'''
 def pointToIndex(point):
 	#converts a tuple holding a coordinate to a tuple index for grid
 	return (int(round((point[0]-mData.origin[0])/width)),int(round(((point[1]-mData.origin[1])/(-1*width))-1)))
@@ -86,18 +86,15 @@ def aStarHeur(pos,end):
 	coord=indexToPoint(pos)
 	return math.sqrt(2)*min(abs(coord[0]-end[0]),abs(coord[1]-end[1]))+max(abs(coord[0]-end[0]),abs(coord[1]-end[1]))-min(abs(coord[0]-end[0]),abs(coord[1]-end[1]))
 
-def chbyshvDist(pos,end):
-	#Given the position tuple and end tuple 
-	coord=indexToPoint(pos)
-	return max(abs(coord[0]-end[0]),abs(coord[1]-end[1]))
-
-
 def isBlocked(x1,y1):
 	#returns true if there is an obstacle in a given index tuple, false otherwise
 	basePt=indexToPoint((x1,y1))
 	boundary=[basePt,(basePt[0]+width,basePt[1]),(basePt[0],basePt[1]+width),(basePt[0]+width,basePt[1]+width)]
 	#if on edge
 	if x1==0 or x1==mData.length-1 or y1==0 or y1==mData.height-1:
+		return True
+	#pad edge
+	if x1==1 or x1==mData.length-2 or y1==1 or y1==mData.height-2:
 		return True
 	#if obstacle
 	l=list(mData.obsList)
@@ -424,13 +421,22 @@ if __name__ == "__main__":
 	for obs in oList:
 		tempObjList.append([(tuple(map(float,x[1:-1].split(",")))) for x in obs])
 	oList=tempObjList
+	paddedList=[]
+	SCALE=1000
+	for o in oList:
+		scaled_obj=None
+		clipper_offset=pyclipper.PyclipperOffset()
+		clipper_offset.AddPath(pyclipper.scale_to_clipper(o,SCALE),pyclipper.JT_SQUARE,pyclipper.ET_CLOSEDPOLYGON)
+		scaled_obj=clipper_offset.Execute(width*SCALE)
+		scaled_obj=pyclipper.scale_from_clipper(scaled_obj,SCALE)
+		paddedList.append(scaled_obj[0])
 	tempPairList=[]
 	for p in pathList:
 		tempPairList.append([(tuple(map(float,x[1:-1].split(",")))) for x in p])
 	pathList=tempPairList
 	xDist=int(math.ceil(math.ceil(abs(corners[0][0])+abs(corners[2][0]))/width))
 	yDist=int(math.ceil(math.ceil(abs(corners[0][1])+abs(corners[2][1]))/width))
-	mData=mapData(corners,oList,pathList,xDist,yDist)
+	mData=mapData(corners,paddedList,pathList,xDist,yDist)
 	#initalize map grid
 	grid=np.zeros([mData.length,mData.height],object) #[row,col]
 	for x in range(mData.length):
@@ -452,6 +458,7 @@ if __name__ == "__main__":
 			for pair in mData.sgPairs:
 				print pair
 				sPath=gridSolver(aStarHeur,updateA_star,pair[0],pair[1])
+				sPath.insert(0,pair[1])
 				printPath(sPath,pair[0],pair[1])
 				moveOn=0
 				while moveOn==0:
@@ -471,6 +478,7 @@ if __name__ == "__main__":
 		else:
 			for pair in mData.sgPairs:
 				sPath=gridSolver(fdaStarHeur,updateFDA_star,pair[0],pair[1])
+				sPath.insert(0,pair[1])
 				printPath(sPath,pair[0],pair[1])
 				moveOn=0
 				while moveOn==0:
