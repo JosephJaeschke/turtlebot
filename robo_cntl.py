@@ -336,9 +336,8 @@ def visGraphSolver(segments,start,goal):
 		if coord[0]==goal[0] and coord[1]==goal[1]:
 			print "Found Path!"
 			while not (vert.parent==None):
-				par=vertex.parent
-				path.append(par.pos)
-				vert=par
+				path.append(vert.pos)
+				vert=vert.parent
 			return path
 		closed.append(vert)
 		for l in segments:
