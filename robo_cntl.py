@@ -258,7 +258,6 @@ def gridSolver(heur,update,start,finish):
 	path=[]		#list of coordinates in optimal path
 	fringe=[]	#list of coordinates in open list
 	closed=[]	#list of coordinates in closed list
-	fPts=[]
 	strt=snapToGrid(start)
 	goal=snapToGrid(finish)
 	curIndex=(heur(strt,goal),pointToIndex(strt)) #tuples in heap indexes
@@ -347,18 +346,17 @@ def printMap():
 		pg.draw.rect(window,(0,0,0),(i*5,0,1,mData.height*5),1)
 	for j in range(mData.height):
 		pg.draw.rect(window,(0,0,0),(0,j*5,mData.length*5,1),1)
-	strt=pointToIndex(mData.sgPairs[0][0])
-	end=pointToIndex(mData.sgPairs[0][1])
-	for x in fPts:
-		pg.draw.rect(window,(100,0,100),(x[0]*bs,x[1]*bs,bs,bs))
-	pg.draw.rect(window,(255,0,0),(end[0]*bs,end[1]*bs,bs,bs),1)
-	pg.draw.rect(window,(0,255,0),(strt[0]*bs,strt[1]*bs,bs,bs),1)
 	pg.display.update()
 
-def printPath(path):
+def printPath(path,start,goal):
+	printMap()
 	if path==None:
 		return
 	global window
+	global fPts
+	for x in fPts:
+		pg.draw.rect(window,(100,0,100),(x[0]*5,x[1]*5,5,5))
+	fPts=[]
 	for coord in path:
 		p=pointToIndex(coord)
 		rect=pg.Rect(p[0]*5,p[1]*5,5,5)
@@ -367,6 +365,14 @@ def printPath(path):
 		pg.draw.rect(window,(0,0,0),(i*5,0,1,mData.height*5),1)
 	for i in range(mData.height):
 		pg.draw.rect(window,(0,0,0),(0,i*5,mData.length*5,1),1)
+	strt=pointToIndex(snapToGrid(start))
+	end=pointToIndex(snapToGrid(goal))
+	pg.draw.rect(window,(255,0,0),(end[0]*5,end[1]*5,5,5))
+	pg.draw.rect(window,(0,255,0),(strt[0]*5,strt[1]*5,5,5))
+	for i in range(mData.length):
+		pg.draw.rect(window,(0,0,0),(i*5,0,1,mData.height*5),1)
+	for j in range(mData.height):
+		pg.draw.rect(window,(0,0,0),(0,j*5,mData.length*5,1),1)
 	pg.display.update()
 	
 def tracePath(path):
@@ -375,6 +381,15 @@ def tracePath(path):
 	path=list(reversed(path))
 	for p in path:
 		moveClient(p)
+
+def reInitGrid():
+	for i in range(mData.height):
+		for j in range(mData.length):
+			grid[j][i].vertex.parent=None
+			grid[j][i].vertex.g=0
+			grid[j][i].vertex.h=0
+
+	printMap()
 
 if __name__ == "__main__":
 	#parse map file
@@ -419,9 +434,33 @@ if __name__ == "__main__":
 		for y in range(mData.height):
 			v=Vertex(indexToPoint((x,y)))
 			grid[x][y]=Cell((x,y),v,isBlocked(x,y))
-	#do stuff
-	p=gridSolver(fdaStarHeur,updateFDA_star,mData.sgPairs[0][0],mData.sgPairs[0][1])
-	printMap()
-	printPath(p)
+	#do solving
+	algo="0"
+	while algo!="1" and algo!="2":
+		print "(1) Grid based, (2) Visibility Graph"
+		algo=raw_input()
+	if algo=="1":
+		printMap()
+		method="0"
+		while method!="1" and method!="2":
+			print "(1) A*, (2) FDA*"
+			method=raw_input()
+		if method=="1":
+			for pair in mData.sgPairs:
+				print pair
+				sPath=gridSolver(aStarHeur,updateA_star,pair[0],pair[1])
+				printPath(sPath,pair[0],pair[1])
+				raw_input("Press \"Enter\" to continue")
+				reInitGrid()
+		else:
+			for pair in mData.sgPairs:
+				sPath=gridSolver(fdaStarHeur,updateFDA_star,pair[0],pair[1])
+				printPath(sPath,pair[0],pair[1])
+				raw_input("Press \"Enter\" to continue")
+				reInitGrid()
+	print "Done!"
 	while True:
-		time.sleep(1)
+		for event in pg.event.get():
+			if event.type==pg.QUIT:
+				pg.quit()
+				sys.exit()
