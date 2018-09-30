@@ -319,6 +319,49 @@ def gridSolver(heur,update,start,finish):
 	print "No path..."
 	return None
 
+def visGraphSolver(segments,start,goal):
+	#segments is a list of lists of two points
+	source=Vertex(start)
+	source.g=0
+	path=[]
+	fringe=[]
+	closed=[]
+	curPos=(fdaStarHeur(start,goal),source)
+	heapq.heappush(fringe,curPos)
+	while fringe:
+		#curPos=(h,Vertex)
+		curPos=heapq.heappop(fringe)
+		vert=curPos[1]
+		coord=vert.pos
+		if coord[0]==goal[0] and coord[1]==goal[1]:
+			print "Found Path!"
+			while not (vert.parent==None):
+				par=vertex.parent
+				path.append(par.pos)
+				vert=par
+			return path
+		for l in segments:
+			if coord in l:
+				if l not in closed:
+					inF=[a for a,b in enumerate(fringe) if b[1]==coord]
+					if inF==[]:
+						index=0
+						if l[0]==coord:
+							index=1
+						new=Vertex(l[index])
+						new.g=float("inf")
+						new.parent=None
+					cost=dist(coord,l[index])
+					if vert.g+cost<new.g:
+						new.g=vert.g+cost
+						new.parent=vert
+						if not (inF==[]):
+							fringe.pop(inF[0])
+							heapq.heapify(fringe)
+						heapq.heappush(fringe,(new.g+heur(new.pos,goal),new))
+	print "No path..."
+	return None
+
 
 def printMap():
 	global window
@@ -392,6 +435,7 @@ def reInitGrid():
 	printMap()
 
 if __name__ == "__main__":
+	myPoint=Point(1,2,3)
 	#parse map file
 	print "Enter map file"
 	while True:
