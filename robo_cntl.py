@@ -471,7 +471,20 @@ if __name__ == "__main__":
 			for pair in mData.sgPairs:
 				sPath=gridSolver(fdaStarHeur,updateFDA_star,pair[0],pair[1])
 				printPath(sPath,pair[0],pair[1])
-				raw_input("Press \"Enter\" to continue")
+				moveOn=0
+				while moveOn==0:
+					for event in pg.event.get():
+						keyPressed=pg.key.get_pressed()
+						if event.type==pg.MOUSEBUTTONUP:
+							coords=pg.mouse.get_pos()
+							cell=(coords[0]/5,coords[1]/5)
+							g=grid[cell[0]][cell[1]].vertex.g
+							h=grid[cell[0]][cell[1]].vertex.h
+							print indexToPoint(cell),"with g=",g," h=",h," f=",g+h
+						if keyPressed[pg.K_n]:
+							moveOn=1
+							break
+				time.sleep(0.2)
 				reInitGrid()
 	print "Done!"
 	while True:
