@@ -502,8 +502,9 @@ if __name__ == "__main__":
 				printMap()
 				print pair
 				sPath=gridSolver(aStarHeur,updateA_star,pair[0],pair[1])
-				sPath.insert(0,pair[1])
-				printPath(sPath,pair[0],pair[1])
+				if sPath!=None:
+					sPath.insert(0,pair[1])
+					printPath(sPath,pair[0],pair[1])
 				moveOn=0
 				while moveOn==0:
 					for event in pg.event.get():
@@ -524,8 +525,9 @@ if __name__ == "__main__":
 				printMap()
 				print pair
 				sPath=gridSolver(fdaStarHeur,updateFDA_star,pair[0],pair[1])
-				sPath.insert(0,pair[1])
-				printPath(sPath,pair[0],pair[1])
+				if sPath!=None:
+					sPath.insert(0,pair[1])
+					printPath(sPath,pair[0],pair[1])
 				moveOn=0
 				while moveOn==0:
 					for event in pg.event.get():
