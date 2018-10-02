@@ -50,7 +50,7 @@ fPts=[]
 #ROS STUFF
 def moveClient(point):
 	retVal=False
-	rospy.wait_for_service('TurtleBotControl')
+	rospy.wait_for_service('/TurtleBotControl')
 	try:
 		turtlebot_control=rospy.ServiceProxy('/turtlebot_control',TurtleBotControl)
 		retVal=turtlebot_control(point)
@@ -364,7 +364,7 @@ def printPath(path,start,goal):
 	for j in range(mData.height):
 		pg.draw.rect(window,(0,0,0),(0,j*5,mData.length*5,1),1)
 	pg.display.update()
-	tracePath(path)
+	#tracePath(path)
 	
 def tracePath(path):
 	if path==None:
@@ -437,62 +437,56 @@ if __name__ == "__main__":
 		for y in range(mData.height):
 			v=Vertex(indexToPoint((x,y)))
 			grid[x][y]=Cell((x,y),v,isBlocked(x,y))
-	#do solving
-	algo="0"
-	while algo!="1" and algo!="2":
-		print "(1) Grid based, (2) Visibility Graph"
-		algo=raw_input()
-	if algo=="1":
-		method="0"
-		while method!="1" and method!="2":
-			print "(1) A*, (2) FDA*"
-			method=raw_input()
-		if method=="1":
-			for pair in mData.sgPairs:
-				printMap()
-				print pair
-				sPath=gridSolver(aStarHeur,updateA_star,pair[0],pair[1])
-				if sPath!=None:
-					sPath.insert(0,pair[1])
-					printPath(sPath,pair[0],pair[1])
-				moveOn=0
-				while moveOn==0:
-					for event in pg.event.get():
-						keyPressed=pg.key.get_pressed()
-						if event.type==pg.MOUSEBUTTONUP:
-							coords=pg.mouse.get_pos()
-							cell=(coords[0]/5,coords[1]/5)
-							g=grid[cell[0]][cell[1]].vertex.g
-							h=grid[cell[0]][cell[1]].vertex.h
-							print indexToPoint(cell),"with g=",g," h=",h," f=",g+h
-						if keyPressed[pg.K_n]:
-							moveOn=1
-							break
-				time.sleep(0.2)
-				reInitGrid()
-		else:
-			for pair in mData.sgPairs:
-				printMap()
-				print pair
-				sPath=gridSolver(fdaStarHeur,updateFDA_star,pair[0],pair[1])
-				if sPath!=None:
-					sPath.insert(0,pair[1])
-					printPath(sPath,pair[0],pair[1])
-				moveOn=0
-				while moveOn==0:
-					for event in pg.event.get():
-						keyPressed=pg.key.get_pressed()
-						if event.type==pg.MOUSEBUTTONUP:
-							coords=pg.mouse.get_pos()
-							cell=(coords[0]/5,coords[1]/5)
-							g=grid[cell[0]][cell[1]].vertex.g
-							h=grid[cell[0]][cell[1]].vertex.h
-							print indexToPoint(cell),"with g=",g," h=",h," f=",g+h
-						if keyPressed[pg.K_n]:
-							moveOn=1
-							break
-				time.sleep(0.2)
-				reInitGrid()
+	method="0"
+	while method!="1" and method!="2":
+		print "(1) A*, (2) FDA*"
+		method=raw_input()
+	if method=="1":
+		for pair in mData.sgPairs:
+			printMap()
+			print pair
+			sPath=gridSolver(aStarHeur,updateA_star,pair[0],pair[1])
+			if sPath!=None:
+				sPath.insert(0,pair[1])
+				printPath(sPath,pair[0],pair[1])
+			moveOn=0
+			while moveOn==0:
+				for event in pg.event.get():
+					keyPressed=pg.key.get_pressed()
+					if event.type==pg.MOUSEBUTTONUP:
+						coords=pg.mouse.get_pos()
+						cell=(coords[0]/5,coords[1]/5)
+						g=grid[cell[0]][cell[1]].vertex.g
+						h=grid[cell[0]][cell[1]].vertex.h
+						print indexToPoint(cell),"with g=",g," h=",h," f=",g+h
+					if keyPressed[pg.K_n]:
+						moveOn=1
+						break
+			time.sleep(0.2)
+			reInitGrid()
+	else:
+		for pair in mData.sgPairs:
+			printMap()
+			print pair
+			sPath=gridSolver(fdaStarHeur,updateFDA_star,pair[0],pair[1])
+			if sPath!=None:
+				sPath.insert(0,pair[1])
+				printPath(sPath,pair[0],pair[1])
+			moveOn=0
+			while moveOn==0:
+				for event in pg.event.get():
+					keyPressed=pg.key.get_pressed()
+					if event.type==pg.MOUSEBUTTONUP:
+						coords=pg.mouse.get_pos()
+						cell=(coords[0]/5,coords[1]/5)
+						g=grid[cell[0]][cell[1]].vertex.g
+						h=grid[cell[0]][cell[1]].vertex.h
+						print indexToPoint(cell),"with g=",g," h=",h," f=",g+h
+					if keyPressed[pg.K_n]:
+						moveOn=1
+						break
+			time.sleep(0.2)
+			reInitGrid()
 	print "Done!"
 	while True:
 		for event in pg.event.get():
