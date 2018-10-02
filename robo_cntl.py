@@ -62,7 +62,7 @@ def moveClient(point):
 	rospy.wait_for_service('TurtleBotControl')
 	try:
 		turtlebot_control=rospy.ServiceProxy('/turtlebot_control',TurtleBotControl)
-		retVal=connect_to_server(point.x,point.y)
+		retVal=connect_to_server(point)
 	except rospy.ServiceException, e:
 		print "Something went wrong"
 	return retVal
@@ -424,9 +424,12 @@ def tracePath(path):
 		return
 	path=list(reversed(path))
 	for p in path:
-		#status=moveClient(p)
+		continue #REMOVE THIS!!!
+		#point=Point(p[0],p[1],0)
+		#status=moveClient(point)
 		#if not status
-		return
+		#	return
+	return
 
 def reInitGrid():
 	for i in range(mData.height):
