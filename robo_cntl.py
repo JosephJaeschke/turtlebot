@@ -39,7 +39,7 @@ from std_msgs.msg import String
 import sys
 import pyclipper
 #from TurtleBotControl.srv import *
-#from geometry_msgs import Point
+#from geometry_msgs.msg import Point
 
 grid=None
 mData=None
