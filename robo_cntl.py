@@ -62,7 +62,7 @@ def moveClient(point):
 	rospy.wait_for_service('TurtleBotControl')
 	try:
 		turtlebot_control=rospy.ServiceProxy('/turtlebot_control',TurtleBotControl)
-		retVal=connect_to_server(point)
+		retVal=turtlebot_control(point)
 	except rospy.ServiceException, e:
 		print "Something went wrong"
 	return retVal
